@@ -29,6 +29,9 @@ jobs:
           key: ${{ runner.os }}-lein-${{ hashFiles('euler/project.clj') }}
           restore-keys: |
             ${{ runner.os }}-lein-
+
+      - name: Run linter
+        run: lein lint
         
       - name: Run tests
         run: lein test
