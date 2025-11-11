@@ -1,0 +1,34 @@
+name: Clojure CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Clojure (Leiningen + Clojure CLI)
+        uses: DeLaGuardo/setup-clojure@11.0
+        with:
+          lein: latest
+          cli: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2
+            ~/.lein
+            ./euler/target
+          key: ${{ runner.os }}-lein-${{ hashFiles('euler/project.clj') }}
+          restore-keys: |
+            ${{ runner.os }}-lein-
+        
+      - name: Run tests
+        run: lein test
