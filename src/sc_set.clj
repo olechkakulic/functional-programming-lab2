@@ -1,5 +1,6 @@
 (ns sc-set
-  (:refer-clojure :exclude [filter]))
+  (:refer-clojure :exclude [filter empty remove]))
+
 (defn empty
   "Создать пустую HashMap (capacity = 16)."
   []
@@ -8,42 +9,41 @@
 
 (defn- bucket-index
   "Вычисление индекса бакета по key и capacity."
-  [capacity key]
-  (mod (hash key) capacity))
+  [capacity k]
+  (mod (hash k) capacity))
 
 (defn add
   "Добавление пары (key value). Если ключ уже есть — значение заменяется.
    Возвращает новую HashMap."
-  [key value m]
+  [k value m]
   (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity key)
+        idx (bucket-index capacity k)
         bucket (nth buckets idx)
-        ;; создаём новый вектор filtered, который содержит все пары из bucket, кроме тех, у которых ключ равен key.
-        filtered (->> bucket (remove (fn [[k _]] (= k key))) vec)
-        updated-bucket (into [[key value]] filtered)
+        ;; создаём новый вектор filtered, который содержит все пары из bucket, кроме тех, у которых ключ равен k.
+        filtered (->> bucket (clojure.core/remove (fn [[kk _]] (= kk k))) vec)
+        updated-bucket (into [[k value]] filtered)
         new-buckets (assoc buckets idx updated-bucket)]
     (assoc m :buckets new-buckets)))
 
 (defn remove
   "Удаление элемента по ключу. Возвращает новую HashMap."
-  [key m]
+  [k m]
   (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity key)
-        updated-bucket (->> (nth buckets idx) (clojure.core/remove (fn [[k _]] (= k key))) vec)
+        idx (bucket-index capacity k)
+        updated-bucket (->> (nth buckets idx) (clojure.core/remove (fn [[kk _]] (= kk k))) vec)
         new-buckets (assoc buckets idx updated-bucket)]
     (assoc m :buckets new-buckets)))
-
 (defn try-find
   "Поиск значения по ключу. Возвращает значение или nil, если не найдено."
-  [key m]
+  [k m]
   (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity key)]
-    (some (fn [[k v]] (when (= k key) v)) (nth buckets idx))))
+        idx (bucket-index capacity k)]
+    (some (fn [[kk v]] (when (= kk k) v)) (nth buckets idx))))
 
 (defn contains-key
   "Проверка наличия ключа (true/false)."
-  [key m]
-  (boolean (try-find key m)))
+  [k m]
+  (boolean (try-find k m)))
 
 (defn map-values
   "Применяет функцию f ко всем значениям, возвращает новую HashMap<'K,'U>."
