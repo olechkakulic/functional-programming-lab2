@@ -1,9 +1,8 @@
 (ns unit
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [sc-set :as hm]
             [clojure.string :as str]))
 
-;; helper: build a hashmap from a sequence of [k v] pairs
 (defn build [pairs]
   (reduce (fn [acc [k v]] (hm/add k v acc))
           (hm/empty)
@@ -43,19 +42,16 @@
     (is (= 6 result))))
 
 (deftest combine-merges-and-overrides-duplicates
-  ;; Note: to match original F# test behavior (m1 |> combine m2),
-  ;; we call combine with arguments in the reversed order: (combine m2 m1)
   (let [m1 (build [[1 "one"] [2 "two"]])
         m2 (build [[2 "TWO"] [3 "three"]])
-        result (hm/combine m2 m1)] ;; corresponds to F# m1 |> combine m2
+        result (hm/combine m2 m1)]
     (is (= "one" (hm/try-find 1 result)))
-    (is (= "TWO" (hm/try-find 2 result))) ;; from m2
+    (is (= "TWO" (hm/try-find 2 result)))
     (is (= "three" (hm/try-find 3 result)))))
 
 (deftest equals-compares-identical-maps
   (let [m1 (build [[2 "two"] [1 "one"]])
         m2 (build [[1 "one"] [2 "two"]])]
-    ;; F# used pipe: m1 |> equals m2  => equals m2 m1
     (is (true? (hm/equals m2 m1)))))
 
 (deftest equals-detects-different-values
@@ -66,6 +62,5 @@
 (deftest monoid-identity-with-empty
   (let [empty-monoid (hm/empty)
         m (build [[1 "a"] [2 "b"]])]
-    ;; check both sides of identity
     (is (true? (hm/equals m (hm/combine empty-monoid m))))
     (is (true? (hm/equals m (hm/combine m empty-monoid))))))
