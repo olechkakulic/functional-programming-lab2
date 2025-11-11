@@ -1,0 +1,1 @@
+["^ ","~:members",["^ ","getTypeArguments",["~#set",[["^ ","~:flags",["^2",["~:method","~:public"]]]]],"setTypeArguments",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"isUsingDiamondOperator",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"setDiamondOperator",["^2",[["^ ","^3",["^2",["^4","^5"]]]]],"removeTypeArguments",["^2",[["^ ","^3",["^2",["^4","^5"]]]]]]]

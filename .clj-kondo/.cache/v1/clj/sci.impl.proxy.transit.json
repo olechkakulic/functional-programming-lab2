@@ -1,0 +1,1 @@
+["^ ","~$proxy",["^ ","~:row",6,"~:col",1,"~:varargs-min-arity",4,"~:name","^0","~:ns","~$sci.impl.proxy","~:top-ns","^6","~:type","~:fn"],"~$proxy*",["^ ","^1",25,"^2",1,"~:fixed-arities",["~#set",[4]],"^4","^:","^5","^6","^7","^6","^8","^9"],"~:filename","/Users/mac/.m2/repository/org/babashka/sci/0.10.47/sci-0.10.47.jar:sci/impl/proxy.clj"]
