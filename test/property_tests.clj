@@ -4,67 +4,68 @@
             [clojure.test.check.clojure-test :refer [defspec]]
             [sc-set :as set]))
 
-(declare prop-add-then-find
+(declare prop-add-then-contains
          prop-remove-behaviour
          prop-monoid-identity
          prop-monoid-associative
-         prop-map-values-composition)
+         prop-map-composition)
 
-(def pair-gen
-  (gen/vector (gen/tuple gen/small-integer gen/small-integer)))
+(def elem-gen gen/small-integer)
+(def elems-gen (gen/vector elem-gen))
 
-(defn build [pairs]
-  (reduce (fn [acc [k v]] (set/add k v acc))
+(defn build
+  [elems]
+  (reduce (fn [acc e] (set/add e acc))
           (set/empty)
-          pairs))
+          elems))
 
-(defspec prop-add-then-find 200
-  (prop/for-all [pairs pair-gen
-                 k gen/small-integer
-                 v gen/small-integer]
-                (let [m  (build pairs)
-                      m2 (set/add k v m)]
-                  (= v (set/try-find k m2)))))
+(defspec prop-add-then-contains 200
+  (prop/for-all [elems elems-gen
+                 x elem-gen]
+                (let [s  (build elems)
+                      s2 (set/add x s)]
+                  (set/contains-element x s2))))
 
 (defspec prop-remove-behaviour 200
-  (prop/for-all [pairs pair-gen
-                 k gen/small-integer
-                 v gen/small-integer]
-                (let [m        (build pairs)
-                      m-added  (set/add k v m)
-                      m-removed (set/remove k m-added)]
-                  (and (nil? (set/try-find k m-removed))
-                       (every? (fn [[kk _]]
-                                 (if (= kk k)
+  (prop/for-all [elems elems-gen
+                 x elem-gen]
+                (let [s         (build elems)
+                      s-added   (set/add x s)
+                      s-removed (set/remove x s-added)]
+                  (and (not (set/contains-element x s-removed))
+                       (every? (fn [y]
+                                 (if (= y x)
                                    true
-                                   (= (set/try-find kk m-removed) (set/try-find kk m))))
-                               pairs)))))
+                                   (= (set/contains-element y s)
+                                      (set/contains-element y s-removed))))
+                               elems)))))
 
 (defspec prop-monoid-identity 200
-  (prop/for-all [pairs pair-gen]
-                (let [m (build pairs)
+  (prop/for-all [elems elems-gen]
+                (let [s (build elems)
                       e (set/empty)]
-                  (and (set/equals m (set/combine e m))
-                       (set/equals m (set/combine m e))))))
+                  (and (set/equals s (set/combine e s))
+                       (set/equals s (set/combine s e))))))
 
 (defspec prop-monoid-associative 200
-  (prop/for-all [pa pair-gen
-                 pb pair-gen
-                 pc pair-gen]
-                (let [a (build pa)
-                      b (build pb)
-                      c (build pc)
+  (prop/for-all [ea elems-gen
+                 eb elems-gen
+                 ec elems-gen]
+                (let [a (build ea)
+                      b (build eb)
+                      c (build ec)
                       left  (set/combine a (set/combine b c))
                       right (set/combine (set/combine a b) c)]
                   (set/equals left right))))
 
-(def funcs (gen/elements [inc dec (fn [x] (* 2 x)) identity]))
+(def funcs
+  (gen/elements [inc dec (fn [x] (* 2 x)) identity]))
 
-(defspec prop-map-values-composition 200
-  (prop/for-all [pairs pair-gen
+(defspec prop-map-composition 200
+  (prop/for-all [elems elems-gen
                  f funcs
                  g funcs]
-                (let [m     (build pairs)
-                      left  (set/map-values f (set/map-values g m))
-                      right (set/map-values (comp f g) m)]
+                (let [s     (build elems)
+                      left  (set/map f (set/map g s))
+                      right (set/map (comp f g) s)]
                   (set/equals left right))))

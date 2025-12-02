@@ -1,93 +1,89 @@
 (ns sc-set
-  (:refer-clojure :exclude [filter empty remove]))
+  (:refer-clojure :exclude [empty remove filter map]))
+
+(def ^:private default-capacity 16)
 
 (defn empty
   []
-  {:buckets (vec (repeat 16 []))
-   :capacity 16})
+  {:buckets (vec (repeat default-capacity []))
+   :capacity default-capacity})
 
 (defn- bucket-index
-  [capacity k]
-  (mod (hash k) capacity))
+  [capacity e]
+  (mod (hash e) capacity))
+
+(defn- update-bucket
+  [s e f]
+  (let [{:keys [buckets capacity]} s
+        idx (bucket-index capacity e)]
+    (update s :buckets
+            (fn [buckets]
+              (update buckets idx f)))))
+
+(defn- without-elem
+  [e bucket]
+  (vec (clojure.core/remove #(= % e) bucket)))
 
 (defn add
-  [k value m]
-  (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity k)
-        bucket (nth buckets idx)
-        ;; создаём новый вектор filtered, который содержит все пары из bucket, кроме тех, у которых ключ равен k.
-        filtered (->> bucket (clojure.core/remove (fn [[kk _]] (= kk k))) vec)
-        updated-bucket (into [[k value]] filtered)
-        new-buckets (assoc buckets idx updated-bucket)]
-    (assoc m :buckets new-buckets)))
+  [e s]
+  (update-bucket s e
+                 (fn [bucket]
+                   (conj (without-elem e bucket) e))))
 
 (defn remove
-  [k m]
-  (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity k)
-        updated-bucket (->> (nth buckets idx) (clojure.core/remove (fn [[kk _]] (= kk k))) vec)
-        new-buckets (assoc buckets idx updated-bucket)]
-    (assoc m :buckets new-buckets)))
-;; ищем ключ по значению
-(defn try-find
-  [k m]
-  (let [{:keys [buckets capacity]} m
-        idx (bucket-index capacity k)]
-    (some (fn [[kk v]] (when (= kk k) v)) (nth buckets idx))))
+  [e s]
+  (update-bucket s e
+                 (fn [bucket]
+                   (without-elem e bucket))))
 
-(defn contains-key
-  [k m]
-  (boolean (try-find k m)))
-
-;; функц ко всем знач
-(defn map-values
-  [f m]
-  (let [{:keys [buckets capacity]} m
-        new-buckets (->> buckets
-                         (map (fn [bucket]
-                                (->> bucket
-                                     (map (fn [[k v]] [k (f v)]))
-                                     vec)))
-                         vec)]
-    {:buckets new-buckets :capacity capacity}))
+(defn contains-element
+  [e s]
+  (let [{:keys [buckets capacity]} s
+        idx (bucket-index capacity e)
+        bucket (nth buckets idx)]
+    (boolean (some #(= % e) bucket))))
 
 (defn filter
-  [pred m]
-  (let [{:keys [buckets]} m
-        new-buckets (->> buckets
-                         (map (fn [bucket]
-                                (->> bucket
-                                     (clojure.core/filter (fn [[k v]] (pred k v)))
-                                     vec)))
-                         vec)]
-    (assoc m :buckets new-buckets)))
-;; левая сверт
+  [pred s]
+  (update s :buckets
+          (fn [buckets]
+            (mapv (fn [bucket]
+                    (vec (clojure.core/filter pred bucket)))
+                  buckets))))
+
 (defn fold
-  [f state m]
-  (let [{:keys [buckets]} m]
+  [f init s]
+  (let [{:keys [buckets]} s]
     (reduce (fn [acc bucket]
-              (reduce (fn [acc' [k v]] (f acc' k v)) acc bucket))
-            state
+              (reduce f acc bucket))
+            init
             buckets)))
-;; правая сверт
+
 (defn fold-back
-  [f state m]
-  (let [{:keys [buckets]} m
+  [f init s]
+  (let [{:keys [buckets]} s
         rev-buckets (reverse buckets)]
     (reduce (fn [acc bucket]
-              (reduce (fn [acc' [k v]] (f k v acc')) acc (reverse bucket)))
-            state
+              (reduce (fn [acc' e] (f e acc')) acc (reverse bucket)))
+            init
             rev-buckets)))
 
+(defn map
+  [f s]
+  (fold (fn [acc e] (add (f e) acc))
+        (empty)
+        s))
+
 (defn combine
-  [map1 map2]
-  (fold (fn [acc k v] (add k v acc)) map2 map1))
+  [s1 s2]
+  (fold (fn [acc e] (add e acc)) s2 s1))
 
 (defn equals
-  [other m]
-  (let [g (fn [s k _] (conj s k))
-        s1 (fold g #{} m)
-        all-keys (fold g s1 other)]
-    (every? (fn [k]
-              (= (try-find k m) (try-find k other)))
-            all-keys)))
+  [a b]
+  (let [all-in? (fn [x y]
+                  (fold (fn [ok e]
+                          (and ok (contains-element e y)))
+                        true
+                        x))]
+    (and (all-in? a b)
+         (all-in? b a))))
