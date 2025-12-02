@@ -30,6 +30,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-lein-
 
+      - name: Check formatting
+        run: lein cljfmt check
+
       - name: Run linter
         run: lein lint
         
