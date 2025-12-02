@@ -14,7 +14,7 @@
 
 (defn- update-bucket
   [s e f]
-  (let [{:keys [buckets capacity]} s
+  (let [{:keys [capacity]} s
         idx (bucket-index capacity e)]
     (update s :buckets
             (fn [buckets]
