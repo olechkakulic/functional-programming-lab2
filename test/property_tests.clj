@@ -1,4 +1,5 @@
 (ns property-tests
+
   (:require [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as prop]
             [clojure.test.check.clojure-test :refer [defspec]]
@@ -19,6 +20,7 @@
           (set/empty)
           elems))
 
+(def set-gen (gen/fmap build elems-gen))
 (defspec prop-add-then-contains 200
   (prop/for-all [elems elems-gen
                  x elem-gen]
@@ -41,23 +43,18 @@
                                elems)))))
 
 (defspec prop-monoid-identity 200
-  (prop/for-all [elems elems-gen]
-                (let [s (build elems)
-                      e (set/empty)]
+  (prop/for-all [s set-gen]
+                (let [e (set/empty)]
                   (and (set/equals s (set/combine e s))
                        (set/equals s (set/combine s e))))))
 
 (defspec prop-monoid-associative 200
-  (prop/for-all [ea elems-gen
-                 eb elems-gen
-                 ec elems-gen]
-                (let [a (build ea)
-                      b (build eb)
-                      c (build ec)
-                      left  (set/combine a (set/combine b c))
+  (prop/for-all [a set-gen
+                 b set-gen
+                 c set-gen]
+                (let [left  (set/combine a (set/combine b c))
                       right (set/combine (set/combine a b) c)]
                   (set/equals left right))))
-
 (def funcs
   (gen/elements [inc dec (fn [x] (* 2 x)) identity]))
 
