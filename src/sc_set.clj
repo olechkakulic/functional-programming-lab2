@@ -23,7 +23,6 @@
   (max 1 (int (Math/ceil (* capacity load-factor)))))
 
 (defn- rehash
-  "Rebuild buckets using a new capacity to keep load factor acceptable."
   [s new-capacity]
   (let [rebuilt (reduce
                  (fn [buckets bucket]
@@ -78,6 +77,10 @@
 
     (boolean (some #(= % e) bucket))))
 
+(defn size
+  [s]
+  (:size s))
+
 (defn filter
   [pred s]
   (let [buckets (:buckets s)
@@ -116,17 +119,10 @@
 
 (defn equals
   [a b]
-  (let [all-in? (fn [x y]
-                  (reduce (fn [ok bucket]
-                            (if (false? ok)
-                              (reduced false)
-                              (reduce (fn [ok' e]
-                                        (if (contains-element e y)
-                                          ok'
-                                          (reduced false)))
-                                      ok
-                                      bucket)))
-                          true
-                          (:buckets x)))]
-    (and (= (:size a) (:size b))
-         (all-in? a b))))
+  (and (= (size a) (size b))
+       (fold (fn [acc e]
+               (if acc
+                 (contains-element e b)
+                 (reduced false)))
+             true
+             a)))

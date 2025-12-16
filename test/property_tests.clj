@@ -20,27 +20,30 @@
           (set/empty)
           elems))
 
-(def set-gen (gen/fmap build elems-gen))
+(def set-gen
+  (gen/fmap build elems-gen))
+
+(def non-empty-set-gen
+  (gen/fmap build (gen/not-empty elems-gen)))
 (defspec prop-add-then-contains 200
-  (prop/for-all [elems elems-gen
+  (prop/for-all [s set-gen
                  x elem-gen]
-                (let [s  (build elems)
-                      s2 (set/add x s)]
+                (let [s2 (set/add x s)]
                   (set/contains-element x s2))))
 
 (defspec prop-remove-behaviour 200
-  (prop/for-all [elems elems-gen
+  (prop/for-all [s set-gen
                  x elem-gen]
-                (let [s         (build elems)
-                      s-added   (set/add x s)
-                      s-removed (set/remove x s-added)]
+                (let [s-added   (set/add x s)
+                      s-removed (set/remove x s-added)
+                      all-elems (set/fold (fn [acc e] (conj acc e)) [] s)]
                   (and (not (set/contains-element x s-removed))
                        (every? (fn [y]
                                  (if (= y x)
                                    true
                                    (= (set/contains-element y s)
                                       (set/contains-element y s-removed))))
-                               elems)))))
+                               all-elems)))))
 
 (defspec prop-monoid-identity 200
   (prop/for-all [s set-gen]
@@ -59,10 +62,9 @@
   (gen/elements [inc dec (fn [x] (* 2 x)) identity]))
 
 (defspec prop-map-composition 200
-  (prop/for-all [elems elems-gen
+  (prop/for-all [s set-gen
                  f funcs
                  g funcs]
-                (let [s     (build elems)
-                      left  (set/map f (set/map g s))
+                (let [left  (set/map f (set/map g s))
                       right (set/map (comp f g) s)]
                   (set/equals left right))))

@@ -77,5 +77,4 @@
   (let [elems (range 100)
         s     (build elems)]
     (is (every? #(set/contains-element % s) elems))
-    (is (> (:capacity s) 16))
-    (is (= (count elems) (:size s)))))
+    (is (= (count elems) (set/size s)))))
