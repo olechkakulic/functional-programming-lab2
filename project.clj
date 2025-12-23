@@ -17,4 +17,5 @@
                     ["cljfmt" "check"]
                     ["kibit"]
                     ["bikeshed" "--max-line-length" "120"]
-                    ["run" "-m" "clj-kondo.main" "--lint" "src" "test"]]})
+                    ["run" "-m" "clj-kondo.main" "--lint" "src" "test"
+                     "--config" "{:linters {:unresolved-symbol {:exclude [(clojure.test.check.clojure-test/defspec)]}}}"]]})
