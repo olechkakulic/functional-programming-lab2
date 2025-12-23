@@ -1,0 +1,21 @@
+# Leiningen build artifacts
+target/
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+*.war
+*.ear
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Clojure tooling
+.cpcache/
+.clj-kondo/
+.lsp/
+lein-checkout/
+
