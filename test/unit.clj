@@ -66,6 +66,7 @@
         s2 (build [1 3])]
     (is (false? (set/equals s1 s2)))))
 
+;;  проверка свойства нейтрального элемента моноида
 (deftest monoid-identity-with-empty
   (let [empty-set (set/empty)
         s         (build [1 2])]

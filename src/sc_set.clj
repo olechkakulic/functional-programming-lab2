@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [empty remove filter map]))
 
 (def ^:private default-capacity 16)
+
 (def ^:private load-factor 0.75)
 
 (defn- new-buckets
